@@ -1,3 +1,4 @@
+'''Reads the data, particles and interaction files, and generates coordination numbers (Zi)'''
 import os  # Import os module for operating system functionalities
 import glob  # Import glob module for file pattern matching
 import platform  # Import platform module to determine operating system
@@ -9,10 +10,10 @@ from datetime import datetime  # Import datetime for timestamp generation
 # Define paths based on platform
 system_platform = platform.system()  # Get the current operating system
 if system_platform == 'Darwin':  # Check if the OS is macOS
-    topDir = Path("/Volumes/T7 Shield/NEW KN VALUES FOR SUSPENSION DYNAMICS/Stress 10r")  # Set top directory path for macOS
-    output_path = Path("/Volumes/T7 Shield/3D Analysis 10r")  # Set output directory path for macOS
+    topDir = Path("/Volumes/T7 Shield/NEW KN VALUES FOR SUSPENSION DYNAMICS/Stress 100r")  # Set top directory path for macOS
+    output_path = Path("/Volumes/T7 Shield/3D Analysis 100r")  # Set output directory path for macOS
 elif system_platform == 'Linux':  # Check if the OS is Linux
-    topDir = Path("/Volumes/T7 Shield/NEW KN VALUES FOR SUSPENSION DYNAMICS/Stress 10r")  # Set top directory path for Linux
+    topDir = Path("/Volumes/T7 Shield/NEW KN VALUES FOR SUSPENSION DYNAMICS/Stress 100r")  # Set top directory path for Linux
     output_path = Path("/Users/brolinadu-poku/City College Dropbox/Brolin Adu Poku/3D Analysis")  # Set output directory path for Linux
 else:  # Handle unsupported operating systems
     raise OSError(f"Unsupported OS: {system_platform}")  # Raise an error for unsupported OS
@@ -21,7 +22,7 @@ else:  # Handle unsupported operating systems
 output_path.mkdir(parents=True, exist_ok=True)  # Create output directory, including parents, if it doesn't exist
 
 # Simulation parameters
-phi = [0.52, 0.53, 0.54, 0.55, 0.56, 0.57, 0.58, 0.59]  # Define list of volume fractions
+phi = [0.52, 0.53]  # Define list of volume fractions
 ar = [1.4]  # Define list of aspect ratios
 vr = ['0.5']  # Define list of volume ratios (smaller to larger particles)
 numRun = [1]  # Define list of run numbers
