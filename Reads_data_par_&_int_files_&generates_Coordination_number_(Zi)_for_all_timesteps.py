@@ -22,7 +22,7 @@ else:  # Handle unsupported operating systems
 output_path.mkdir(parents=True, exist_ok=True)  # Create output directory, including parents, if it doesn't exist
 
 # Simulation parameters
-phi = [0.52, 0.53]  # Define list of volume fractions
+phi = [0.52, 0.53, 0.54, 0.55, 0.56, 0.57, 0.58, 0.59]  # Define list of volume fractions
 ar = [1.4]  # Define list of aspect ratios
 vr = ['0.5']  # Define list of volume ratios (smaller to larger particles)
 numRun = [1]  # Define list of run numbers
