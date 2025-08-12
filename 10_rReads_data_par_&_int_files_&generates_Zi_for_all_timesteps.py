@@ -5,6 +5,16 @@ from pathlib import Path  # Import Path class for handling file paths
 import numpy as np  # Import numpy for numerical operations
 import pandas as pd  # Import pandas for data manipulation
 from datetime import datetime  # Import datetime for timestamp generation
+import readFiles
+
+'''
+Aug 11, 2025; RVP - Added detailed comments and improved structure
+Aug 10, 2025; BAP - Intial version
+
+Description: Describe what the code does here
+
+NOTE: add any notes and usage instructions here
+'''
 
 # Define paths based on platform
 system_platform = platform.system()  # Get the current operating system
@@ -28,157 +38,13 @@ numRun = [1]  # Define list of run numbers
 n_particles = 1000  # Set number of particles in simulation
 
 # File patterns
-particleFile = 'par_*.dat'  # Define pattern for particle data files
-dataFile = 'data_*.dat'  # Define pattern for simulation data files
+particleFile    = 'par_*.dat'  # Define pattern for particle data files
+dataFile        = 'data_*.dat'  # Define pattern for simulation data files
 interactionFile = 'int_*.dat'  # Define pattern for interaction data files
 
-def read_data_file(file_path):  # Define function to read data_*.dat files
-    """Read data_*.dat file and extract all columns with proper headers."""
-    data = np.loadtxt(file_path)  # Load data from file into numpy array
-    
-    # Column mapping based on provided headers
-    columns = {
-        'time': data[:, 0],  # Extract time column (index 0)
-        'cumulated_shear_strain': data[:, 1],  # Extract cumulated shear strain (index 1)
-        'shear_rate': data[:, 2],  # Extract shear rate (index 2)
-        'viscosity': data[:, 3],  # Extract viscosity (index 3)
-        'viscosity_contact': data[:, 4],  # Extract contact viscosity (index 4)
-        'viscosity_dashpot': data[:, 5],  # Extract dashpot viscosity (index 5)
-        'viscosity_hydro': data[:, 6],  # Extract hydrodynamic viscosity (index 6)
-        'viscosity_repulsion': data[:, 7],  # Extract repulsion viscosity (index 7)
-        'particle_pressure': data[:, 8],  # Extract particle pressure (index 8)
-        'particle_pressure_contact': data[:, 9],  # Extract contact particle pressure (index 9)
-        'N1_viscosity': data[:, 10],  # Extract N1 viscosity (index 10)
-        'N2_viscosity': data[:, 11],  # Extract N2 viscosity (index 11)
-        'energy': data[:, 12],  # Extract energy (index 12)
-        'min_gap': data[:, 13],  # Extract minimum gap (index 13)
-        'max_tangential_displacement': data[:, 14],  # Extract max tangential displacement (index 14)
-        'contact_number': data[:, 15],  # Extract contact number (index 15)
-        'frictional_contact_number': data[:, 16],  # Extract frictional contact number (index 16)
-        'avg_sliding_friction_mobilization': data[:, 17],  # Extract average sliding friction mobilization (index 17)
-        'number_of_interaction': data[:, 18],  # Extract number of interactions (index 18)
-        'max_velocity': data[:, 19],  # Extract maximum velocity (index 19)
-        'max_angular_velocity': data[:, 20],  # Extract maximum angular velocity (index 20)
-        'dt': data[:, 21],  # Extract time step (index 21)
-        'kn': data[:, 22],  # Extract normal stiffness (index 22)
-        'kt': data[:, 23],  # Extract tangential stiffness (index 23)
-        'kr': data[:, 24],  # Extract rotational stiffness (index 24)
-        'shear_strain_26': data[:, 25],  # Extract shear strain component (index 25)
-        'shear_strain_27': data[:, 26],  # Extract shear strain component (index 26)
-        'shear_strain_28': data[:, 27],  # Extract shear strain component (index 27)
-        'shear_stress': data[:, 28],  # Extract shear stress (index 28)
-        'theta_shear': data[:, 29]  # Extract shear angle (index 29)
-    }
-    return columns  # Return dictionary of column data
-
-def read_particles_file(file_path):  # Define function to read par_*.dat files
-    """Read par_*.dat file and extract all particle data with proper headers."""
-    with open(file_path, 'r') as f:  # Open file in read mode
-        lines = f.readlines()  # Read all lines from file
-    
-    # Extract metadata from header
-    metadata = {}  # Initialize dictionary for metadata
-    for line in lines[:22]:  # Process first 22 lines (header)
-        if line.startswith('# np '):  # Check for number of particles
-            metadata['np'] = int(line.split()[-1])  # Store number of particles
-        elif line.startswith('# VF '):  # Check for volume fraction
-            metadata['VF'] = float(line.split()[-1])  # Store volume fraction
-        elif line.startswith('# Lx '):  # Check for box dimension Lx
-            metadata['Lx'] = float(line.split()[-1])  # Store Lx dimension
-        elif line.startswith('# Ly '):  # Check for box dimension Ly
-            metadata['Ly'] = float(line.split()[-1])  # Store Ly dimension
-        elif line.startswith('# Lz '):  # Check for box dimension Lz
-            metadata['Lz'] = float(line.split()[-1])  # Store Lz dimension
-    
-    # Process particle data
-    lines = lines[22:]  # Skip header lines
-    parList = []  # Initialize list to store particle data frames
-    frame = []  # Initialize temporary list for current frame
-    hashCounter = 0  # Initialize counter for hash lines
-    
-    for line in lines:  # Process each line
-        if line.startswith('#'):  # Check if line is a separator
-            hashCounter += 1  # Increment hash counter
-            if hashCounter == 7 and frame:  # Check if frame is complete (7 hashes)
-                parList.append(np.array(frame))  # Store frame as numpy array
-                frame = []  # Reset frame
-                hashCounter = 0  # Reset hash counter
-        else:  # Process data line
-            frame.append([float(x) for x in line.split()])  # Convert line to list of floats
-    
-    if frame:  # Check if any remaining frame data
-        parList.append(np.array(frame))  # Store final frame
-    
-    # Return structured data with column names
-    structured_data = []  # Initialize list for structured data
-    for frame in parList:  # Process each frame
-        frame_dict = {
-            'particle_index': frame[:, 0].astype(int),  # Extract particle index (column 0)
-            'radius': frame[:, 1],  # Extract particle radius (column 1)
-            'pos_x': frame[:, 2],  # Extract x-position (column 2)
-            'pos_y': frame[:, 3],  # Extract y-position (column 3)
-            'pos_z': frame[:, 4],  # Extract z-position (column 4)
-            'vel_x': frame[:, 5],  # Extract x-velocity (column 5)
-            'vel_y': frame[:, 6],  # Extract y-velocity (column 6)
-            'vel_z': frame[:, 7],  # Extract z-velocity (column 7)
-            'ang_vel_x': frame[:, 8],  # Extract x-angular velocity (column 8)
-            'ang_vel_y': frame[:, 9],  # Extract y-angular velocity (column 9)
-            'ang_vel_z': frame[:, 10]  # Extract z-angular velocity (column 10)
-        }
-        structured_data.append(frame_dict)  # Append frame dictionary to list
-    
-    return structured_data, metadata  # Return structured data and metadata
-
-def read_interaction_file(file_path):  # Define function to read int_*.dat files
-    """Read int_*.dat file and extract all interaction data with proper headers."""
-    with open(file_path, 'r') as f:  # Open file in read mode
-        lines = f.readlines()[27:]  # Skip first 27 lines (header)
-    
-    interactions = []  # Initialize list for interaction frames
-    temp = []  # Initialize temporary list for current frame
-    hashCounter = 0  # Initialize counter for hash lines
-    
-    for line in lines:  # Process each line
-        if line.startswith('#'):  # Check if line is a separator
-            hashCounter += 1  # Increment hash counter
-            if hashCounter == 7 and temp:  # Check if frame is complete
-                interactions.append(np.array(temp))  # Store frame as numpy array
-                temp = []  # Reset frame
-                hashCounter = 0  # Reset hash counter
-        else:  # Process data line
-            temp.append([float(x) for x in line.split()])  # Convert line to list of floats
-    
-    if temp:  # Check if any remaining frame data
-        interactions.append(np.array(temp))  # Store final frame
-    
-    # Return structured data with column names
-    structured_interactions = []  # Initialize list for structured interactions
-    for frame in interactions:  # Process each frame
-        if len(frame) > 0:  # Check if frame contains data
-            frame_dict = {
-                'particle_1_label': frame[:, 0].astype(int),  # Extract particle 1 label (column 0)
-                'particle_2_label': frame[:, 1].astype(int),  # Extract particle 2 label (column 1)
-                'normal_vector_x': frame[:, 2],  # Extract x-component of normal vector (column 2)
-                'normal_vector_y': frame[:, 3],  # Extract y-component of normal vector (column 3)
-                'normal_vector_z': frame[:, 4],  # Extract z-component of normal vector (column 4)
-                'dimensionless_gap': frame[:, 5],  # Extract dimensionless gap (column 5)
-                'normal_lubrication_force': frame[:, 6],  # Extract normal lubrication force (column 6)
-                'tangential_lubrication_force_x': frame[:, 7],  # Extract x-tangential lubrication force (column 7)
-                'tangential_lubrication_force_y': frame[:, 8],  # Extract y-tangential lubrication force (column 8)
-                'tangential_lubrication_force_z': frame[:, 9],  # Extract z-tangential lubrication force (column 9)
-                'contact_state': frame[:, 10].astype(int),  # Extract contact state (column 10)
-                'normal_contact_force_norm': frame[:, 11],  # Extract normal contact force norm (column 11)
-                'tangential_contact_force_x': frame[:, 12],  # Extract x-tangential contact force (column 12)
-                'tangential_contact_force_y': frame[:, 13],  # Extract y-tangential contact force (column 13)
-                'tangential_contact_force_z': frame[:, 14],  # Extract z-tangential contact force (column 14)
-                'sliding_friction_mobilization': frame[:, 15],  # Extract sliding friction mobilization (column 15)
-                'normal_repulsive_force_norm': frame[:, 16]  # Extract normal repulsive force norm (column 16)
-            }
-        else:  # Handle empty frame
-            frame_dict = {}  # Create empty dictionary for empty frame
-        structured_interactions.append(frame_dict)  # Append frame dictionary to list
-    
-    return structured_interactions  # Return list of structured interactions
+dataArr = np.loadtxt(topDir / dataFile)  # Load data from a specific data file
+parList = readFiles.readParFile(open(glob.glob(f'{topDir}/{particleFile}')[0]))
+intList = readFiles.readParFile(open(glob.glob(f'{topDir}/{interactionFile}')[0]))
 
 def calculate_coordination_numbers(interactions, n_particles):  # Define function to calculate coordination numbers
     """Calculate Zi = sum(Aij) for each particle i at each timestep."""
@@ -243,9 +109,9 @@ for i, phii in enumerate(phi):  # Iterate through volume fractions
                         continue  # Skip to next iteration
 
                     # Read all data
-                    data_dict = read_data_file(data_file)  # Read data file
-                    particles_data, metadata = read_particles_file(par_file)  # Read particle file
-                    interactions_data = read_interaction_file(interaction_file)  # Read interaction file
+                    # data_dict = read_data_file(data_file)  # Read data file
+                    # particles_data, metadata = read_particles_file(par_file)  # Read particle file
+                    # interactions_data = read_interaction_file(interaction_file)  # Read interaction file
 
                     # Calculate coordination numbers
                     coordination_numbers = calculate_coordination_numbers(interactions_data, n_particles)  # Compute coordination numbers
